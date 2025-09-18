@@ -4,7 +4,7 @@ import {
   messages, 
   favorites,
   type User, 
-  type InsertUser,
+  type UpsertUser,
   type Property,
   type InsertProperty,
   type Message,
@@ -14,17 +14,12 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, desc, asc } from "drizzle-orm";
-import { sql } from "drizzle-orm";
-import { PasswordUtils } from "./auth";
 
 // Storage interface for all real estate marketplace operations
 export interface IStorage {
-  // User operations
+  // User operations (Replit Auth compatible)
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   deleteUser(id: string): Promise<boolean>;
 
   // Property operations
@@ -75,43 +70,19 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    // Hash the password before storing
-    const hashedPassword = await PasswordUtils.hashPassword(insertUser.password);
-    
+  async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values({
-        ...insertUser,
-        password: hashedPassword,
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     return user;
-  }
-
-  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
-    // Hash password if it's being updated
-    const updateData = { ...updates };
-    if (updateData.password) {
-      updateData.password = await PasswordUtils.hashPassword(updateData.password);
-    }
-    
-    const [user] = await db
-      .update(users)
-      .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
-    return user || undefined;
   }
 
   // Property operations
@@ -282,18 +253,6 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount ?? 0) > 0;
   }
 
-  /**
-   * Authenticate user by email and password
-   */
-  async authenticateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.getUserByEmail(email);
-    if (!user) {
-      return null;
-    }
-    
-    const isValid = await PasswordUtils.comparePassword(password, user.password);
-    return isValid ? user : null;
-  }
 }
 
 export const storage = new DatabaseStorage();

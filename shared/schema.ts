@@ -1,21 +1,32 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, timestamp, boolean, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, timestamp, boolean, unique, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table with role-based access
+// Session storage table for Replit Auth (REQUIRED)
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// Users table with role-based access (Replit Auth compatible)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("buyer"), // buyer, seller, agent, admin
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  phone: text("phone"),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  // Additional fields for real estate marketplace
+  role: varchar("role", { enum: ["buyer", "seller", "agent"] }).notNull().default("buyer"),
+  phone: varchar("phone"),
   bio: text("bio"),
-  profileImage: text("profile_image"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Properties table for real estate listings
@@ -110,15 +121,18 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
 }));
 
 // Zod schemas for validation
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
+
+// Replit Auth compatible schemas
+export const upsertUserSchema = createInsertSchema(users).pick({
+  id: true,
   email: true,
-  password: true,
-  role: true,
   firstName: true,
   lastName: true,
-  phone: true,
-  bio: true,
+  profileImageUrl: true,
+}).extend({
+  role: z.enum(["buyer", "seller", "agent"]).optional(),
+  phone: z.string().optional(),
+  bio: z.string().optional(),
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({
@@ -138,9 +152,10 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   createdAt: true,
 });
 
-// Type exports
+// Type exports for Replit Auth compatibility
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof upsertUserSchema>; // Required for Replit Auth
+export type InsertUser = Omit<typeof users.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>; // For manual user creation if needed
 export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type Message = typeof messages.$inferSelect;
