@@ -1,0 +1,125 @@
+📝 Project Requisition – Real Estate Marketplace Platform
+
+Project Title: Real Estate Marketplace with Unique Design & Modern Authentication
+
+Objective:
+Build a full-featured real estate marketplace with functionality similar to Realtor.com, Zillow, Redfin, Trulia, 99acres, and MagicBricks, but with a unique, modern, and differentiated look & feel.
+
+🔑 Core Features
+1. User Management & Authentication
+
+Authentication using JWT
+
+OAuth social logins: Google & Apple
+
+User roles: buyer, seller, agent, admin
+
+Profile management (photo, contact, bio, preferences)
+
+2. Property Listings
+
+Add, edit, delete property listings
+
+Rich property details (price, photos, video tours, features, location)
+
+Property status: for sale, for rent, sold, pending
+
+Support for multi-photo gallery & 360° virtual tours
+
+3. Search & Filters
+
+Keyword and location-based search (city, zip, neighborhood)
+
+Advanced filters: price, property type, bedrooms, bathrooms, amenities
+
+Map-based search (Google Maps / Mapbox)
+
+Saved searches & property alerts
+
+4. Communication & Engagement
+
+In-app chat/messaging between buyers and agents
+
+Contact forms for property inquiries
+
+Notifications (email, SMS, push)
+
+5. Admin Panel
+
+Manage users, agents, properties, and transactions
+
+Approve/reject property listings
+
+Analytics & reporting (user activity, trending locations)
+
+Revenue/monetization management (subscriptions, featured listings, ads)
+
+6. Additional Tools
+
+Mortgage & affordability calculators with sleek charts/graphs
+
+AI-powered property recommendations
+
+Personalized dashboards
+
+🎨 Look & Feel – Unique Design Guidelines
+
+Take inspiration from multiple real estate apps: Realtor, Zillow, Redfin, Trulia, 99acres, MagicBricks.
+
+Do not replicate any single app’s design — instead, create a unique, modern design language.
+
+Focus on a clean, minimal, professional UI with:
+
+Bold typography
+
+Modern icons
+
+Smooth animations
+
+Card-based layouts for properties with hover effects.
+
+Unique screen layouts (beyond list + map):
+
+Dashboard-style homepage with highlights, trends, and recommendations
+
+Interactive map view with custom pins & advanced filters
+
+Property detail pages with full-width galleries, virtual tours, and sticky CTAs
+
+Agent profile pages styled like social media cards
+
+Mortgage calculator & affordability tools with graphs
+
+Dark mode + light mode support.
+
+AI-driven recommendations (“Properties you may like”) with carousel-style layouts.
+
+Modern animations & transitions (Framer Motion style).
+
+Modular, responsive design adaptable for both web & mobile.
+
+⚙️ Tech Stack Requirements
+
+Frontend: React.js / Next.js (SEO-friendly, responsive)
+
+Backend: Node.js / Express (or Django/FastAPI alternative)
+
+Database: PostgreSQL or MongoDB
+
+Auth: JWT + OAuth (Google/Apple login)
+
+APIs: REST or GraphQL
+
+Storage: AWS S3 or Google Cloud for images & videos
+
+Deployment: Cloud-ready (AWS, GCP, or Azure)
+
+🚀 Non-Functional Requirements
+
+Scalable (1M+ users)
+
+Secure (data encryption, GDPR compliant)
+
+High availability & fast performance
+
+Logging & monitoring (ELK stack, Prometheus, etc.)
