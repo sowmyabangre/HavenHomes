@@ -1,4 +1,5 @@
 // Landing page for logged-out users based on blueprint:javascript_log_in_with_replit
+import { useSEO } from '@/hooks/useSEO';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import PropertyGrid from '../components/PropertyGrid';
@@ -10,6 +11,16 @@ import condoImage from '@assets/generated_images/luxury_downtown_condo_building_
 import agentPhoto from '@assets/generated_images/professional_agent_headshot_woman_018b07d9.png';
 
 export default function Landing() {
+  // SEO metadata for landing page
+  useSEO({
+    title: 'PropertyHub - Buy, Sell, Rent Properties',
+    description: 'Discover your dream home with PropertyHub. Browse luxury properties, connect with top agents, and start your search today.',
+    ogTitle: 'PropertyHub - Real Estate Marketplace',
+    ogDescription: 'Find luxury homes, condos, and apartments. Connect with professional real estate agents.',
+    canonical: typeof window !== 'undefined' ? window.location.origin + '/' : undefined,
+    ogUrl: typeof window !== 'undefined' ? window.location.origin + '/' : undefined
+  });
+
   // Todo: Remove mock functionality - replace with real property data
   const featuredProperties: Property[] = [
     {

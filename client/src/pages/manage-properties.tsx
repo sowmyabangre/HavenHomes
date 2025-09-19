@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSEO } from "@/hooks/useSEO";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,6 +33,16 @@ export default function ManageProperties() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const { toast } = useToast();
+
+  // SEO metadata
+  useSEO({
+    title: 'Manage Properties - Agent Dashboard | PropertyHub',
+    description: 'Create, edit, and manage your real estate listings. Add new properties and update existing ones.',
+    ogTitle: 'Property Management - PropertyHub',
+    ogDescription: 'Manage your real estate listings and property portfolio.',
+    canonical: typeof window !== 'undefined' ? window.location.origin + '/manage-properties' : undefined,
+    ogUrl: typeof window !== 'undefined' ? window.location.origin + '/manage-properties' : undefined
+  });
 
   // Fetch user's properties
   const { data: user } = useQuery({

@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSEO } from "@/hooks/useSEO";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,16 @@ interface FavoriteWithProperty extends Favorite {
 
 export default function Favorites() {
   const { toast } = useToast();
+
+  // SEO metadata
+  useSEO({
+    title: 'My Favorites - Saved Properties | PropertyHub',
+    description: 'View and manage your saved properties. Keep track of homes and properties you\'re interested in buying or renting.',
+    ogTitle: 'My Favorite Properties - PropertyHub',
+    ogDescription: 'View your saved properties and manage your real estate favorites.',
+    canonical: typeof window !== 'undefined' ? window.location.origin + '/favorites' : undefined,
+    ogUrl: typeof window !== 'undefined' ? window.location.origin + '/favorites' : undefined
+  });
 
   // Fetch user's favorites
   const { data: favorites = [], isLoading } = useQuery({

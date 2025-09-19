@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSEO } from "@/hooks/useSEO";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,6 +34,16 @@ export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<ConversationGroup | null>(null);
   const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // SEO metadata
+  useSEO({
+    title: 'Messages - Real Estate Communication | PropertyHub',
+    description: 'Manage your property inquiries and communicate with real estate agents about listings.',
+    ogTitle: 'Messages - PropertyHub',
+    ogDescription: 'Communicate with real estate agents about property listings.',
+    canonical: typeof window !== 'undefined' ? window.location.origin + '/messages' : undefined,
+    ogUrl: typeof window !== 'undefined' ? window.location.origin + '/messages' : undefined
+  });
 
   // Fetch current user
   const { data: user } = useQuery({

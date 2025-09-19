@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useSEO } from '@/hooks/useSEO';
 import type { User, Property as DbProperty } from '@shared/schema';
 import { Property } from '../components/PropertyCard';
 import Header from '../components/Header';
@@ -17,6 +18,16 @@ import agentPhoto from '@assets/generated_images/professional_agent_headshot_wom
 export default function Home() {
   const { user } = useAuth() as { user: User | undefined };
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
+
+  // SEO metadata
+  useSEO({
+    title: 'PropertyHub - Find Your Perfect Home',
+    description: 'Discover luxury properties, connect with top real estate agents, and find your dream home. Browse thousands of listings.',
+    ogTitle: 'PropertyHub - Real Estate Marketplace',
+    ogDescription: 'Find your perfect home with PropertyHub. Browse luxury properties and connect with professional agents.',
+    canonical: typeof window !== 'undefined' ? window.location.origin + '/' : undefined,
+    ogUrl: typeof window !== 'undefined' ? window.location.origin + '/' : undefined
+  });
   
   // Fetch featured properties from the database
   const { data: dbProperties = [], isLoading: isLoadingProperties } = useQuery({

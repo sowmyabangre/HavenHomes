@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useSEO } from "@/hooks/useSEO";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,16 @@ export default function Properties() {
   });
   const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
+
+  // SEO metadata
+  useSEO({
+    title: 'Property Search - Browse Real Estate | PropertyHub',
+    description: 'Search thousands of properties for sale and rent. Filter by price, location, bedrooms to find your perfect home.',
+    ogTitle: 'Browse Properties - PropertyHub',
+    ogDescription: 'Discover properties that match your needs. Search by location, price range, and features.',
+    ogUrl: typeof window !== 'undefined' ? window.location.origin + '/properties' : undefined,
+    canonical: typeof window !== 'undefined' ? window.location.origin + '/properties' : undefined
+  });
 
   // Fetch properties with filters
   const { data: properties = [], isLoading } = useQuery({
