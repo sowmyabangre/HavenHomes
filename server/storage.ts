@@ -143,24 +143,25 @@ export class DatabaseStorage implements IStorage {
 
     const sortOrder = filters.sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
 
-    // Build and execute query
-    let queryBuilder = db.select().from(properties);
+    // Build query with all conditions at once
+    const baseQuery = db.select().from(properties);
+    
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const limit = filters.limit || 50;
+    const offset = filters.offset || 0;
 
-    if (conditions.length > 0) {
-      queryBuilder = queryBuilder.where(and(...conditions));
+    if (whereClause) {
+      return await baseQuery
+        .where(whereClause)
+        .orderBy(sortOrder)
+        .limit(limit)
+        .offset(offset);
+    } else {
+      return await baseQuery
+        .orderBy(sortOrder)
+        .limit(limit)
+        .offset(offset);
     }
-
-    queryBuilder = queryBuilder.orderBy(sortOrder);
-
-    if (filters.limit) {
-      queryBuilder = queryBuilder.limit(filters.limit);
-    }
-
-    if (filters.offset) {
-      queryBuilder = queryBuilder.offset(filters.offset);
-    }
-
-    return await queryBuilder;
   }
 
   async getPropertiesByAgent(agentId: string): Promise<Property[]> {
