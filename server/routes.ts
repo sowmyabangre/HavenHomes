@@ -235,10 +235,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/messages/property/:propertyId', async (req, res) => {
+  app.get('/api/messages/property/:propertyId', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
+      const property = await storage.getProperty(req.params.propertyId);
+      
+      if (!property) {
+        return res.status(404).json({ message: 'Property not found' });
+      }
+      
+      // Only allow property owner or involved users to see messages
       const messages = await storage.getMessagesByProperty(req.params.propertyId);
-      res.json(messages);
+      const userMessages = messages.filter(msg => 
+        msg.senderId === userId || msg.recipientId === userId || property.agentId === userId
+      );
+      
+      res.json(userMessages);
     } catch (error) {
       console.error('Error fetching property messages:', error);
       res.status(500).json({ message: 'Failed to fetch property messages' });
