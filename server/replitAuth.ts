@@ -25,13 +25,23 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
+  
+  let sessionStore;
+  
+  // Use MemoryStore in development/test if DATABASE_URL is not available
+  if (process.env.NODE_ENV !== 'production' && !process.env.DATABASE_URL) {
+    // Use default MemoryStore for development/testing
+    sessionStore = undefined;
+  } else if (process.env.DATABASE_URL) {
+    const pgStore = connectPg(session);
+    sessionStore = new pgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true, // Create sessions table if missing in dev/test
+      ttl: sessionTtl,
+      tableName: "sessions",
+    });
+  }
+  
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
@@ -39,7 +49,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax', // CSRF protection
       maxAge: sessionTtl,
     },
@@ -100,11 +110,46 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
+  // Add localhost strategies for development/testing
+  if (process.env.NODE_ENV !== 'production') {
+    const localhostHosts = ['localhost', '127.0.0.1'];
+    for (const host of localhostHosts) {
+      const devStrategy = new Strategy(
+        {
+          name: `replitauth:${host}`,
+          config,
+          scope: "openid email profile offline_access",
+          callbackURL: `http://${host}:5000/api/callback`,
+        },
+        verify,
+      );
+      passport.use(devStrategy);
+    }
+  }
+
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    // Normalize hostnames and provide fallback for testing
+    let hostname = req.hostname;
+    if (hostname === '::1') {
+      hostname = '127.0.0.1';
+    }
+    
+    // Try original hostname first, then fallback to localhost for dev/test
+    const possibleStrategies = [`replitauth:${hostname}`, 'replitauth:localhost', 'replitauth:127.0.0.1'];
+    let strategyName = possibleStrategies[0];
+    
+    // Use fallback strategy for dev/test if original hostname not configured
+    if (process.env.NODE_ENV !== 'production' && !process.env.REPLIT_DOMAINS?.split(',').includes(hostname)) {
+      strategyName = possibleStrategies.find(name => 
+        process.env.REPLIT_DOMAINS?.split(',').includes(name.replace('replitauth:', '')) || 
+        name.includes('localhost') || name.includes('127.0.0.1')
+      ) || 'replitauth:localhost';
+    }
+    
+    passport.authenticate(strategyName, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);

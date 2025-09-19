@@ -18,13 +18,21 @@ import { useToast } from "@/hooks/use-toast";
 import { insertPropertySchema } from "@shared/schema";
 import type { Property } from "@shared/schema";
 
-const propertyFormSchema = insertPropertySchema.extend({
+const propertyFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  address: z.string().min(1, "Address is required"),
   price: z.string().min(1, "Price is required"),
   bedrooms: z.string().min(1, "Bedrooms is required"),
   bathrooms: z.string().min(1, "Bathrooms is required"),
   squareFootage: z.string().min(1, "Square footage is required"),
+  lotSize: z.string().optional(),
   yearBuilt: z.string().optional(),
   parkingSpaces: z.string().optional(),
+  propertyType: z.enum(["house", "condo", "townhouse", "apartment", "land"]),
+  status: z.enum(["for-sale", "for-rent", "sold", "pending"]),
+  images: z.array(z.string()).optional(),
+  features: z.array(z.string()).optional(),
 });
 
 type PropertyFormData = z.infer<typeof propertyFormSchema>;

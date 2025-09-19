@@ -139,6 +139,17 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  // Allow string inputs from forms and convert to numbers
+  price: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
+  bedrooms: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseInt(val) : val),
+  bathrooms: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
+  squareFootage: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseInt(val) : val),
+  yearBuilt: z.union([z.number(), z.string(), z.undefined()]).transform((val) => {
+    if (val === undefined || val === '') return undefined;
+    return typeof val === 'string' ? parseInt(val) : val;
+  }).optional(),
+  parkingSpaces: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseInt(val) : val).optional(),
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
