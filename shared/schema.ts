@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   // Additional fields for real estate marketplace
-  role: varchar("role", { enum: ["buyer", "seller", "agent"] }).notNull().default("buyer"),
+  role: varchar("role", { enum: ["buyer", "seller", "agent", "admin"] }).notNull().default("buyer"),
   phone: varchar("phone"),
   bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -130,7 +130,7 @@ export const upsertUserSchema = createInsertSchema(users).pick({
   lastName: true,
   profileImageUrl: true,
 }).extend({
-  role: z.enum(["buyer", "seller", "agent"]).optional(),
+  role: z.enum(["buyer", "seller", "agent", "admin"]).optional(),
   phone: z.string().optional(),
   bio: z.string().optional(),
 });

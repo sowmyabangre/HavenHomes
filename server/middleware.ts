@@ -34,3 +34,4 @@ export const requireRole = (allowedRoles: string[]): RequestHandler => {
 
 export const requireAgent = requireRole(['agent']);
 export const requireSeller = requireRole(['seller', 'agent']);
+export const requireAdmin = requireRole(['admin']);

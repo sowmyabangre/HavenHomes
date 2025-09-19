@@ -36,7 +36,7 @@ function Router() {
   );
 }
 
-export default function App() {
+function AppLayout() {
   const { isAuthenticated } = useAuth();
 
   const style = {
@@ -45,27 +45,33 @@ export default function App() {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        {isAuthenticated ? (
-          <SidebarProvider style={style as React.CSSProperties}>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <header className="flex items-center justify-between p-2 border-b">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" />
-                </header>
-                <main className="flex-1 overflow-hidden">
-                  <Router />
-                </main>
-              </div>
+    <TooltipProvider>
+      {isAuthenticated ? (
+        <SidebarProvider style={style as React.CSSProperties}>
+          <div className="flex h-screen w-full">
+            <AppSidebar />
+            <div className="flex flex-col flex-1">
+              <header className="flex items-center justify-between p-2 border-b">
+                <SidebarTrigger data-testid="button-sidebar-toggle" />
+              </header>
+              <main className="flex-1 overflow-hidden">
+                <Router />
+              </main>
             </div>
-          </SidebarProvider>
-        ) : (
-          <Router />
-        )}
-        <Toaster />
-      </TooltipProvider>
+          </div>
+        </SidebarProvider>
+      ) : (
+        <Router />
+      )}
+      <Toaster />
+    </TooltipProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppLayout />
     </QueryClientProvider>
   );
 }
