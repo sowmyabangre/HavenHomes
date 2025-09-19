@@ -1,12 +1,13 @@
 // Home page for authenticated users
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import type { User } from '@shared/schema';
+import type { User, Property as DbProperty } from '@shared/schema';
+import { Property } from '../components/PropertyCard';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import PropertyGrid from '../components/PropertyGrid';
 import PropertyDetails from '../components/PropertyDetails';
-import { Property } from '../components/PropertyCard';
 
 // Import images
 import familyHomeImage from '@assets/generated_images/modern_family_home_exterior_2bd95c80.png';
@@ -17,59 +18,26 @@ export default function Home() {
   const { user } = useAuth() as { user: User | undefined };
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
   
-  // Todo: Remove mock functionality - replace with real property data
-  const featuredProperties: Property[] = [
-    {
-      id: '1',
-      title: 'Modern Family Home',
-      address: '123 Oak Street, Greenville, CA 94102',
-      price: 850000,
-      bedrooms: 4,
-      bathrooms: 3,
-      squareFootage: 2400,
-      imageUrl: familyHomeImage,
-      status: 'for-sale',
-      agentName: 'Sarah Johnson',
-      agentPhoto: agentPhoto,
-    },
-    {
-      id: '2',
-      title: 'Luxury Downtown Condo',
-      address: '456 Metropolitan Ave, Downtown, CA 94105',
-      price: 4200,
-      bedrooms: 2,
-      bathrooms: 2,
-      squareFootage: 1200,
-      imageUrl: condoImage,
-      status: 'for-rent',
-      agentName: 'Sarah Johnson',
-      agentPhoto: agentPhoto,
-    },
-    {
-      id: '3',
-      title: 'Charming Victorian',
-      address: '789 Heritage Lane, Historic District, CA 94110',
-      price: 1200000,
-      bedrooms: 3,
-      bathrooms: 2,
-      squareFootage: 1800,
-      imageUrl: familyHomeImage,
-      status: 'pending',
-      agentName: 'Sarah Johnson',
-    },
-    {
-      id: '4',
-      title: 'Contemporary Townhouse',
-      address: '321 Modern Way, Uptown, CA 94107',
-      price: 750000,
-      bedrooms: 3,
-      bathrooms: 2.5,
-      squareFootage: 1600,
-      imageUrl: condoImage,
-      status: 'for-sale',
-      agentName: 'Sarah Johnson',
-    },
-  ];
+  // Fetch featured properties from the database
+  const { data: dbProperties = [], isLoading: isLoadingProperties } = useQuery({
+    queryKey: ['/api/properties'],
+    queryFn: () => fetch('/api/properties?limit=8&sortBy=createdAt&sortOrder=desc').then(res => res.json())
+  });
+
+  // Transform database properties to match PropertyCard interface
+  const featuredProperties: Property[] = dbProperties.slice(0, 4).map((property: DbProperty) => ({
+    id: property.id,
+    title: property.title,
+    address: property.address,
+    price: parseFloat(property.price),
+    bedrooms: property.bedrooms,
+    bathrooms: parseFloat(property.bathrooms.toString()),
+    squareFootage: property.squareFootage,
+    imageUrl: (property.images && property.images.length > 0) ? property.images[0] : '',
+    status: property.status as 'for-sale' | 'for-rent' | 'sold' | 'pending',
+    agentName: 'Agent', // TODO: Fetch agent name from agentId
+    agentPhoto: undefined,
+  }));
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -81,55 +49,7 @@ export default function Home() {
   };
 
   const handlePropertySelect = (property: Property) => {
-    // Create extended property data for details view
-    const extendedProperty = {
-      ...property,
-      description: `This stunning ${property.title.toLowerCase()} offers the perfect blend of contemporary design and comfortable living. Located in a desirable neighborhood, this property features an open-concept layout, high-end finishes, and beautiful surroundings.`,
-      features: [
-        'Hardwood floors throughout',
-        'Granite countertops', 
-        'Stainless steel appliances',
-        'Walk-in closets',
-        'Central air conditioning',
-        'Modern lighting fixtures',
-        'Energy-efficient windows'
-      ],
-      yearBuilt: 2018,
-      lotSize: '0.25 acres',
-      parkingSpaces: 2,
-      images: [property.imageUrl, condoImage, familyHomeImage],
-      agent: {
-        id: '1',
-        name: 'Sarah Johnson',
-        title: 'Senior Real Estate Agent',
-        photo: agentPhoto,
-        phone: '(555) 123-4567',
-        email: 'sarah.johnson@propertyhub.com',
-        bio: 'With over 10 years of experience in luxury real estate, Sarah specializes in helping clients find their dream homes.',
-        rating: 4.9,
-        reviewCount: 127,
-        yearsExperience: 10,
-        propertiesSold: 245,
-        specialties: ['Luxury Homes', 'First-Time Buyers', 'Investment Properties'],
-        certifications: ['Certified Residential Specialist (CRS)', 'Graduate REALTOR Institute (GRI)'],
-      },
-      neighborhood: {
-        walkScore: 75,
-        schools: [
-          { name: 'Greenville Elementary', rating: 8, distance: '0.3 miles' },
-          { name: 'Oak Middle School', rating: 9, distance: '0.8 miles' },
-        ],
-        amenities: [
-          'Whole Foods Market',
-          'Starbucks Coffee',
-          'Oak Park',
-          'Public Library',
-          'Fitness Center',
-          'Medical Center'
-        ],
-      },
-    };
-    setSelectedProperty(extendedProperty);
+    setSelectedProperty(property);
   };
 
   const handleFavoriteToggle = (propertyId: string) => {
@@ -173,14 +93,28 @@ export default function Home() {
         <HeroSection onSearch={handleHeroSearch} />
         
         <section className="container mx-auto px-4 py-16">
-          <PropertyGrid
-            properties={featuredProperties}
-            onPropertySelect={handlePropertySelect}
-            onFavoriteToggle={handleFavoriteToggle}
-            onContactAgent={handleContactAgent}
-            showSearch={false}
-            title="Featured Properties"
-          />
+          {isLoadingProperties ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="mt-4 text-muted-foreground">Loading featured properties...</p>
+            </div>
+          ) : featuredProperties.length > 0 ? (
+            <PropertyGrid
+              properties={featuredProperties}
+              onPropertySelect={handlePropertySelect}
+              onFavoriteToggle={handleFavoriteToggle}
+              onContactAgent={handleContactAgent}
+              showSearch={false}
+              title="Featured Properties"
+            />
+          ) : (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-semibold mb-2">No Properties Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Properties will appear here once agents start adding listings.
+              </p>
+            </div>
+          )}
         </section>
       </main>
     </div>
