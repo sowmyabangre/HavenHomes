@@ -74,7 +74,7 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link href={item.url}>
+                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>
@@ -93,7 +93,7 @@ export function AppSidebar() {
                 {agentMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <Link href={item.url}>
+                      <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
