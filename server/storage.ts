@@ -92,14 +92,75 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProperties(filters: PropertyFilters = {}): Promise<Property[]> {
-    // Simple implementation for now - we'll enhance filtering later
-    const result = await db
-      .select()
-      .from(properties)
-      .orderBy(desc(properties.createdAt))
-      .limit(filters.limit || 50);
-    
-    return result;
+    // Build where conditions
+    const conditions = [];
+
+    if (filters.status) {
+      conditions.push(eq(properties.status, filters.status));
+    }
+
+    if (filters.propertyType) {
+      conditions.push(eq(properties.propertyType, filters.propertyType));
+    }
+
+    if (filters.minPrice) {
+      conditions.push(gte(properties.price, filters.minPrice.toString()));
+    }
+
+    if (filters.maxPrice) {
+      conditions.push(lte(properties.price, filters.maxPrice.toString()));
+    }
+
+    if (filters.minBedrooms) {
+      conditions.push(gte(properties.bedrooms, filters.minBedrooms));
+    }
+
+    if (filters.maxBedrooms) {
+      conditions.push(lte(properties.bedrooms, filters.maxBedrooms));
+    }
+
+    if (filters.minBathrooms) {
+      conditions.push(gte(properties.bathrooms, filters.minBathrooms.toString()));
+    }
+
+    if (filters.maxBathrooms) {
+      conditions.push(lte(properties.bathrooms, filters.maxBathrooms.toString()));
+    }
+
+    if (filters.location) {
+      conditions.push(like(properties.address, `%${filters.location}%`));
+    }
+
+    if (filters.agentId) {
+      conditions.push(eq(properties.agentId, filters.agentId));
+    }
+
+    // Determine sort column and order
+    const sortColumn = filters.sortBy === 'price' ? properties.price
+                     : filters.sortBy === 'bedrooms' ? properties.bedrooms  
+                     : filters.sortBy === 'squareFootage' ? properties.squareFootage
+                     : properties.createdAt;
+
+    const sortOrder = filters.sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
+
+    // Build and execute query
+    let queryBuilder = db.select().from(properties);
+
+    if (conditions.length > 0) {
+      queryBuilder = queryBuilder.where(and(...conditions));
+    }
+
+    queryBuilder = queryBuilder.orderBy(sortOrder);
+
+    if (filters.limit) {
+      queryBuilder = queryBuilder.limit(filters.limit);
+    }
+
+    if (filters.offset) {
+      queryBuilder = queryBuilder.offset(filters.offset);
+    }
+
+    return await queryBuilder;
   }
 
   async getPropertiesByAgent(agentId: string): Promise<Property[]> {
