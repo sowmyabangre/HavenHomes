@@ -145,11 +145,18 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   bedrooms: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseInt(val) : val),
   bathrooms: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
   squareFootage: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseInt(val) : val),
+  lotSize: z.union([z.string(), z.undefined()]).transform((val) => {
+    if (val === undefined || val === '') return undefined;
+    return val;
+  }).optional(),
   yearBuilt: z.union([z.number(), z.string(), z.undefined()]).transform((val) => {
     if (val === undefined || val === '') return undefined;
     return typeof val === 'string' ? parseInt(val) : val;
   }).optional(),
-  parkingSpaces: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseInt(val) : val).optional(),
+  parkingSpaces: z.union([z.number(), z.string(), z.undefined()]).transform((val) => {
+    if (val === undefined || val === '') return undefined;
+    return typeof val === 'string' ? parseInt(val) : val;
+  }).optional(),
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({

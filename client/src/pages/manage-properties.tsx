@@ -86,20 +86,11 @@ export default function ManageProperties() {
   // Create/Update property mutation
   const savePropertyMutation = useMutation({
     mutationFn: async (data: PropertyFormData) => {
-      const propertyData = {
-        ...data,
-        price: parseFloat(data.price),
-        bedrooms: parseInt(data.bedrooms),
-        bathrooms: parseFloat(data.bathrooms),
-        squareFootage: parseInt(data.squareFootage),
-        yearBuilt: data.yearBuilt ? parseInt(data.yearBuilt) : undefined,
-        parkingSpaces: parseInt(data.parkingSpaces || '0'),
-      };
-
+      // Send form data as-is - backend schema handles all transformations
       if (editingProperty) {
-        return apiRequest('PUT', `/api/properties/${editingProperty.id}`, propertyData);
+        return apiRequest('PUT', `/api/properties/${editingProperty.id}`, data);
       } else {
-        return apiRequest('POST', '/api/properties', propertyData);
+        return apiRequest('POST', '/api/properties', data);
       }
     },
     onSuccess: () => {
