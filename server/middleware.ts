@@ -1,6 +1,6 @@
 // Authorization middleware for role-based access control
 import type { RequestHandler } from "express";
-import { isAuthenticated } from "./replitAuth";
+import { isAuthenticated } from "./googleAuth";
 import { storage } from "./storage";
 
 export const requireRole = (allowedRoles: string[]): RequestHandler => {
