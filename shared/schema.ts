@@ -158,6 +158,8 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
     if (val === undefined || val === '') return undefined;
     return typeof val === 'string' ? parseInt(val) : val;
   }).optional(),
+  images: z.array(z.string()).optional(),
+  features: z.array(z.string()).optional(),
   agentId: z.string().optional(),
 });
 

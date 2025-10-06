@@ -144,8 +144,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Only agents and sellers can create properties' });
       }
 
+      console.log('Received property data:', JSON.stringify(req.body, null, 2));
       const validationResult = insertPropertySchema.safeParse(req.body);
       if (!validationResult.success) {
+        console.error('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2));
         return res.status(400).json({ 
           message: 'Invalid property data', 
           errors: validationResult.error.errors 
