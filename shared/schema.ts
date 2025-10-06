@@ -139,6 +139,7 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  agentId: true,
 }).extend({
   // Allow string inputs from forms and convert to numbers
   price: z.union([z.number(), z.string()]).transform((val) => typeof val === 'string' ? parseFloat(val) : val),
@@ -157,6 +158,7 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
     if (val === undefined || val === '') return undefined;
     return typeof val === 'string' ? parseInt(val) : val;
   }).optional(),
+  agentId: z.string().optional(),
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
