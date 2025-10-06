@@ -46,31 +46,28 @@ export default function Messages() {
   });
 
   // Fetch current user
-  const { data: user } = useQuery({
-    queryKey: ['/api/auth/user'],
-    queryFn: () => apiRequest('/api/auth/user')
+  const { data: user } = useQuery<UserType>({
+    queryKey: ['/api/auth/user']
   });
 
   // Fetch user's messages
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['/api/messages'],
-    enabled: !!user,
-    queryFn: () => apiRequest('/api/messages')
+    enabled: !!user
   });
 
   // Fetch properties for new message form
   const { data: properties = [] } = useQuery({
-    queryKey: ['/api/properties'],
-    queryFn: () => apiRequest('/api/properties?limit=100')
+    queryKey: ['/api/properties?limit=100']
   });
 
   // Form for new messages
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageFormSchema),
     defaultValues: {
-      propertyId: '',
+      propertyId: undefined,
       recipientId: '',
-      subject: '',
+      subject: undefined,
       message: '',
       inquiryType: 'general'
     }
@@ -111,7 +108,8 @@ export default function Messages() {
     const messageGroups = new Map<string, Message[]>();
     
     (messages as Message[]).forEach((message: Message) => {
-      const otherUserId = message.senderId === user?.id ? message.recipientId : message.senderId;
+      if (!user) return;
+      const otherUserId = message.senderId === user.id ? message.recipientId : message.senderId;
       const key = `${otherUserId}-${message.propertyId || 'general'}`;
       
       if (!messageGroups.has(key)) {
@@ -122,11 +120,12 @@ export default function Messages() {
 
     // Convert to conversation groups (simplified for now)
     messageGroups.forEach((msgs, key) => {
+      if (!user) return;
       const sortedMsgs = msgs.sort((a, b) => 
         new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime()
       );
       const latestMsg = sortedMsgs[sortedMsgs.length - 1];
-      const otherUserId = latestMsg.senderId === user?.id ? latestMsg.recipientId : latestMsg.senderId;
+      const otherUserId = latestMsg.senderId === user.id ? latestMsg.recipientId : latestMsg.senderId;
       
       // Create mock user data (in real app, would fetch from API)
       const otherUser: UserType = {
@@ -143,7 +142,7 @@ export default function Messages() {
       };
 
       const unreadCount = sortedMsgs.filter(m => 
-        m.recipientId === user?.id && !m.isRead
+        m.recipientId === user.id && !m.isRead
       ).length;
 
       conversations.push({
@@ -162,9 +161,11 @@ export default function Messages() {
     setSelectedConversation(conversation);
     
     // Mark unread messages as read
-    conversation.messages
-      .filter(m => m.recipientId === user?.id && !m.isRead)
-      .forEach(m => markAsReadMutation.mutate(m.id));
+    if (user) {
+      conversation.messages
+        .filter(m => m.recipientId === user.id && !m.isRead)
+        .forEach(m => markAsReadMutation.mutate(m.id));
+    }
   };
 
   const formatTimestamp = (timestamp: Date) => {
@@ -193,10 +194,13 @@ export default function Messages() {
               New Message
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent aria-describedby="new-message-description">
             <DialogHeader>
               <DialogTitle>Send New Message</DialogTitle>
             </DialogHeader>
+            <p id="new-message-description" className="sr-only">
+              Fill out this form to send a new message to a user
+            </p>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSendMessage)} className="space-y-4">
                 <FormField
@@ -205,14 +209,14 @@ export default function Messages() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Property (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-property">
                             <SelectValue placeholder="Select a property" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No specific property</SelectItem>
+                          <SelectItem value="none">No specific property</SelectItem>
                           {(properties as Property[]).map((property: Property) => (
                             <SelectItem key={property.id} value={property.id}>
                               {property.title} - {property.address}
@@ -252,7 +256,8 @@ export default function Messages() {
                       <FormControl>
                         <Input 
                           placeholder="Message subject" 
-                          {...field} 
+                          {...field}
+                          value={field.value || ''}
                           data-testid="input-subject"
                         />
                       </FormControl>
@@ -267,7 +272,7 @@ export default function Messages() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Inquiry Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-inquiry-type">
                             <SelectValue placeholder="Select inquiry type" />
@@ -430,13 +435,13 @@ export default function Messages() {
                     <div
                       key={message.id}
                       className={`flex ${
-                        message.senderId === user?.id ? 'justify-end' : 'justify-start'
+                        message.senderId === (user?.id || '') ? 'justify-end' : 'justify-start'
                       }`}
                       data-testid={`message-${message.id}`}
                     >
                       <div
                         className={`max-w-[70%] rounded-lg p-3 ${
-                          message.senderId === user?.id
+                          message.senderId === (user?.id || '')
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted'
                         }`}

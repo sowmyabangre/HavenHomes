@@ -45,19 +45,23 @@ export default function Properties() {
   // Fetch properties with filters
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['/api/properties', filters],
-    queryFn: () => {
+    queryFn: async () => {
       const searchParams = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (value) searchParams.append(key, value);
       });
-      return apiRequest(`/api/properties?${searchParams}`);
+      const url = searchParams.toString() 
+        ? `/api/properties?${searchParams.toString()}`
+        : '/api/properties';
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+      return res.json();
     }
   });
 
   // Fetch current user for favorites
   const { data: user } = useQuery({
-    queryKey: ['/api/auth/user'],
-    queryFn: () => apiRequest('/api/auth/user')
+    queryKey: ['/api/auth/user']
   });
 
   // Add/remove favorite mutation
@@ -109,7 +113,7 @@ export default function Properties() {
     }).format(parseFloat(price));
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'for-sale': return 'default';
       case 'for-rent': return 'secondary';
@@ -155,12 +159,12 @@ export default function Properties() {
 
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t">
-              <Select value={filters.propertyType || ''} onValueChange={(value) => handleFilterChange('propertyType', value)}>
+              <Select value={filters.propertyType || '__clear__'} onValueChange={(value) => handleFilterChange('propertyType', value === '__clear__' ? '' : value)}>
                 <SelectTrigger data-testid="select-property-type">
                   <SelectValue placeholder="Property Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="__clear__">All Types</SelectItem>
                   <SelectItem value="house">House</SelectItem>
                   <SelectItem value="condo">Condo</SelectItem>
                   <SelectItem value="townhouse">Townhouse</SelectItem>
@@ -183,12 +187,12 @@ export default function Properties() {
                 data-testid="input-max-price"
               />
 
-              <Select value={filters.minBedrooms || ''} onValueChange={(value) => handleFilterChange('minBedrooms', value)}>
+              <Select value={filters.minBedrooms || '__clear__'} onValueChange={(value) => handleFilterChange('minBedrooms', value === '__clear__' ? '' : value)}>
                 <SelectTrigger data-testid="select-min-bedrooms">
                   <SelectValue placeholder="Min Beds" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="__clear__">Any</SelectItem>
                   <SelectItem value="1">1+</SelectItem>
                   <SelectItem value="2">2+</SelectItem>
                   <SelectItem value="3">3+</SelectItem>
