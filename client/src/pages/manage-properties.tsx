@@ -86,7 +86,7 @@ export default function ManageProperties() {
   // Create/Update property mutation
   const savePropertyMutation = useMutation({
     mutationFn: async (data: PropertyFormData) => {
-      // Send form data as-is - backend schema handles all transformations
+      console.log('Submitting property data:', data);
       if (editingProperty) {
         return apiRequest('PUT', `/api/properties/${editingProperty.id}`, data);
       } else {
@@ -105,6 +105,9 @@ export default function ManageProperties() {
       });
     },
     onError: (error: any) => {
+      console.error('Property save error:', error);
+      console.error('Error message:', error.message);
+      console.error('Full error:', JSON.stringify(error, null, 2));
       toast({
         title: "Error",
         description: error.message || "Failed to save property",
