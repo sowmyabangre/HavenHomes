@@ -16,7 +16,7 @@ import { Plus, Edit, Trash2, Bed, Bath, Square, MapPin, DollarSign } from "lucid
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertPropertySchema } from "@shared/schema";
-import type { Property } from "@shared/schema";
+import type { Property, User } from "@shared/schema";
 
 const propertyFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -53,14 +53,13 @@ export default function ManageProperties() {
   });
 
   // Fetch user's properties
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<User>({
     queryKey: ['/api/auth/user']
   });
 
-  const { data: properties = [], isLoading } = useQuery({
+  const { data: properties = [], isLoading } = useQuery<Property[]>({
     queryKey: ['/api/properties/agent', user?.id],
-    enabled: !!user?.id,
-    queryFn: () => apiRequest(`/api/properties/agent/${user.id}`)
+    enabled: !!user?.id
   });
 
   // Form setup
@@ -98,15 +97,9 @@ export default function ManageProperties() {
       };
 
       if (editingProperty) {
-        return apiRequest(`/api/properties/${editingProperty.id}`, {
-          method: 'PUT',
-          body: propertyData
-        });
+        return apiRequest('PUT', `/api/properties/${editingProperty.id}`, propertyData);
       } else {
-        return apiRequest('/api/properties', {
-          method: 'POST',
-          body: propertyData
-        });
+        return apiRequest('POST', '/api/properties', propertyData);
       }
     },
     onSuccess: () => {
@@ -132,7 +125,7 @@ export default function ManageProperties() {
   // Delete property mutation
   const deletePropertyMutation = useMutation({
     mutationFn: (propertyId: string) => 
-      apiRequest(`/api/properties/${propertyId}`, { method: 'DELETE' }),
+      apiRequest('DELETE', `/api/properties/${propertyId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties/agent'] });
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
@@ -163,8 +156,8 @@ export default function ManageProperties() {
       lotSize: property.lotSize || '',
       yearBuilt: property.yearBuilt?.toString() || '',
       parkingSpaces: property.parkingSpaces?.toString() || '0',
-      propertyType: property.propertyType,
-      status: property.status,
+      propertyType: property.propertyType as "house" | "condo" | "townhouse" | "apartment" | "land",
+      status: property.status as "for-sale" | "for-rent" | "sold" | "pending",
       images: property.images || [],
       features: property.features || []
     });
