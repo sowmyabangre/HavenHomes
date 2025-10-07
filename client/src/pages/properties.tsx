@@ -43,7 +43,7 @@ export default function Properties() {
   });
 
   // Fetch properties with filters
-  const { data: properties = [], isLoading } = useQuery({
+  const { data: properties = [], isLoading } = useQuery<Property[]>({
     queryKey: ['/api/properties', filters],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
@@ -55,7 +55,14 @@ export default function Properties() {
         : '/api/properties';
       const res = await fetch(url, { credentials: 'include' });
       if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
-      return res.json();
+      const data = await res.json();
+      console.log('Properties loaded:', data);
+      console.log('Properties count:', data.length);
+      if (data.length > 0) {
+        console.log('First property:', data[0]);
+        console.log('Price type:', typeof data[0].price, data[0].price);
+      }
+      return data;
     }
   });
 
@@ -68,9 +75,9 @@ export default function Properties() {
   const favoriteMutation = useMutation({
     mutationFn: async ({ propertyId, action }: { propertyId: string; action: 'add' | 'remove' }) => {
       if (action === 'add') {
-        return apiRequest('/api/favorites', 'POST', { propertyId });
+        return apiRequest('POST', '/api/favorites', { propertyId });
       } else {
-        return apiRequest(`/api/favorites/${propertyId}`, 'DELETE');
+        return apiRequest('DELETE', `/api/favorites/${propertyId}`);
       }
     },
     onSuccess: () => {
@@ -235,7 +242,7 @@ export default function Properties() {
             </Card>
           ))}
         </div>
-      ) : (properties as Property[]).length === 0 ? (
+      ) : properties.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <h3 className="text-lg font-semibold mb-2">No properties found</h3>
@@ -244,7 +251,7 @@ export default function Properties() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(properties as Property[]).map((property: Property) => (
+          {properties.map((property) => (
             <Card key={property.id} className="overflow-hidden hover-elevate" data-testid={`card-property-${property.id}`}>
               {/* Property Image */}
               <div className="aspect-[4/3] bg-muted relative overflow-hidden">
@@ -329,7 +336,7 @@ export default function Properties() {
       )}
 
       {/* Load More Button */}
-      {(properties as Property[]).length > 0 && (properties as Property[]).length % 12 === 0 && (
+      {properties.length > 0 && properties.length % 12 === 0 && (
         <div className="text-center mt-8">
           <Button variant="outline" size="lg" data-testid="button-load-more">
             Load More Properties
